@@ -112,3 +112,24 @@ Authenticated workflow QA completed: proof generation reaches confirmed receipt 
 Verification Ledger QA passed: status filters narrow rows, keyword search produces the intended empty state, and proof links remain available. The dashboard `View Claims →` dead-end was fixed with an animated claims dialog; clicking it now shows the credential’s extracted claim, predicate/value, public/private badge, close control, and a link to manage visibility.
 
 Static validation passed after the new fixes: `npx tsc --noEmit` and `npm run build` both complete successfully with only the existing non-blocking `jose` Edge Runtime and `pdf-parse` warnings. The final local release is committed as `7299f20` (`Complete ProofShield workflow QA and premium interactions`). A direct `git push origin main` still returns GitHub HTTP 403 for the active CLI token, so the authenticated GitHub web session remains the publishing path.
+
+
+## Production build repair
+
+The first full-source Vercel deployment reached the complete Next.js tree but failed while collecting `/api/auth/register` because `@prisma/client/default.js` was not generated in the Vercel build environment. The `package.json` build script now runs `prisma generate && next build`. Local `npx tsc --noEmit && npm run build` passes after the change, with all authenticated routes included in the generated route table.
+
+
+The first Prisma-generation retry exposed a second deployment issue during dependency installation: `tailwindcss-animate@^1.4.0` does not exist in the npm registry. GitHub commit `1cb161a` changes the range to `^1.0.7`, which matches the local lockfile and installed package. The final local TypeScript check and `prisma generate && next build` both pass after this correction.
+
+
+## Final production verification
+
+Vercel deployment `BDAKhgvRYXZYN3fWoBtkQ7V9XU3K` from GitHub commit `1cb161a` reached `Ready` and is marked Production. The live domain `https://proofshield-git-main-kainturasourav0-stars-projects.vercel.app/auth/login` serves the real ProofShield authentication UI. The protected `/student-dashboard` route exists and redirects unauthenticated visitors to `/auth/login` with a callback URL, confirming the full route tree is deployed rather than only the landing page.
+
+
+## Premium motion pass QA
+
+The new login route renders the Trionn-inspired split composition with staged hero motion, rotating proof signal, role-aware tabs, preloaded demo query support, copyable demo credentials, and one-click demo launch. Candidate demo launch successfully authenticated and routed to `/student-dashboard`. The authenticated shell now shows the scroll progress rail and a working Activity panel with a live protected-workspace status message.
+
+
+The landing page now includes a scroll-progress rail and a working `Open live demo` CTA that routes to `/auth/login?demo=candidate`. The hero proof object still supports animated claim disclosure toggles; the previously private GPA claim successfully became shared during QA.
