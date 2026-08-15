@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  CANDIDATE
+  RECRUITER
+  ADMIN
+}
+
+enum CredentialType {
+  CERTIFICATE
+  TRANSCRIPT
+  GITHUB_PROFILE
+  PROJECT
+  RESUME
+  MANUAL_ENTRY
+}
+
+enum CredentialStatus {
+  PENDING
+  ANALYZING
+  COMPLETE
+  FAILED
+}
+
+enum ClaimType {
+  SKILL_PROFICIENCY
+  PROJECT_COUNT
+  CERTIFICATION
+  HACKATHON_COUNT
+  GPA_THRESHOLD
+}
+
+enum MidnightStatus {
+  PENDING
+  SUBMITTED
+  CONFIRMED
+  FAILED
+}
+
+enum VerificationResult {
+  VERIFIED
+  FAILED
+  PARTIAL
+  EXPIRED
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String?   @unique
+  name           String?
+  role           Role      @default(CANDIDATE)
+  walletAddress  String?
+  createdAt      DateTime  @default(now())
+  
+  // NextAuth standard fields
+  emailVerified  DateTime?
+  image          String?
+  password       String?   // Added for credentials provider
+  
+  credentials    Credential[]
+  claims         Claim[]
+  proofs         Proof[]
+  verifications  Verification[]
+  requirementSets RequirementSet[]
+}
+
+model Credential {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         CredentialType
+  title        String
+  issuer       String?
+  rawDataHash  String?
+  storageUrl   String?
+  analyzedAt   DateTime?
+  status       CredentialStatus @default(PENDING)
+  createdAt    DateTime        @default(now())
+  
+  claims       Claim[]
+  
+  @@index([userId])
+}
+
+model Claim {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String
+  credential   Credential @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+  
+  claimType    ClaimType
+  subject      String
+  predicate    String
+  value        String
+  commitment   String
+  isPublic     Boolean   @default(true)
+  verifiedByAI Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  
+  proofClaims  ProofClaim[]
+  
+  @@index([userId])
+  @@index([credentialId])
+}
+
+model Proof {
+  id             String         @id @default(cuid())
+  candidateId    String
+  user           User           @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  proofHash      String         @unique
+  midnightTxId   String?
+  midnightStatus MidnightStatus @default(PENDING)
+  shareToken     String         @unique @default(cuid())
+  expiresAt      DateTime?
+  createdAt      DateTime       @default(now())
+  
+  proofClaims    ProofClaim[]
+  verifications  Verification[]
+  
+  @@index([candidateId])
+  @@index([shareToken])
+}
+
+model ProofClaim {
+  id         String @id @default(cuid())
+  proofId    String
+  proof      Proof  @relation(fields: [proofId], references: [id], onDelete: Cascade)
+  claimId    String
+  claim      Claim  @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  zkProofData String? // Optional ZK proof data
+  
+  @@index([proofId])
+  @@index([claimId])
+}
+
+model Verification {
+  id             String             @id @default(cuid())
+  recruiterId    String
+  recruiter      User               @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  proofId        String
+  proof          Proof              @relation(fields: [proofId], references: [id], onDelete: Cascade)
+  result         VerificationResult
+  requirementSet Json               // The requirements verified against
+  verifiedAt     DateTime           @default(now())
+  
+  @@index([recruiterId])
+  @@index([proofId])
+}
+
+model RequirementSet {
+  id          String   @id @default(cuid())
+  recruiterId String
+  recruiter   User     @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  requirements Json    // Array of requirements
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([recruiterId])
+}
