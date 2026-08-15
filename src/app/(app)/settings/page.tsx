@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import {
   User,
@@ -14,14 +14,67 @@ import {
 
 export default function SettingsPage() {
   const { data: session } = useSession()
+  const [name, setName] = useState("")
+  const [walletAddress, setWalletAddress] = useState("")
+  const [passphrase, setPassphrase] = useState("")
   const [emailNotifs, setEmailNotifs] = useState(true)
   const [ledgerNotifs, setLedgerNotifs] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState("")
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!session?.user?.id) return
+
+    let active = true
+    fetch("/api/profile")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload) => {
+        if (!active || !payload?.user) return
+        setName(payload.user.name || "")
+        setWalletAddress(payload.user.walletAddress || "")
+      })
+      .catch(() => undefined)
+
+    setEmailNotifs(localStorage.getItem("proofshield.email-notifications") !== "false")
+    setLedgerNotifs(localStorage.getItem("proofshield.ledger-notifications") !== "false")
+    setPassphrase(sessionStorage.getItem("proofshield.passphrase") || "")
+
+    return () => {
+      active = false
+    }
+  }, [session?.user?.id])
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setIsSaving(true)
+    setSaveError("")
+
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, walletAddress }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Unable to save your profile")
+      }
+
+      localStorage.setItem("proofshield.email-notifications", String(emailNotifs))
+      localStorage.setItem("proofshield.ledger-notifications", String(ledgerNotifs))
+      if (passphrase) {
+        sessionStorage.setItem("proofshield.passphrase", passphrase)
+      } else {
+        sessionStorage.removeItem("proofshield.passphrase")
+      }
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2200)
+    } catch (error: any) {
+      setSaveError(error?.message || "Unable to save your changes")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const inputClass =
@@ -56,7 +109,8 @@ export default function SettingsPage() {
               </label>
               <input
                 type="text"
-                defaultValue={session?.user?.name || ""}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
                 placeholder="Your name"
                 className={inputClass}
               />
@@ -71,7 +125,7 @@ export default function SettingsPage() {
                 </div>
                 <input
                   type="email"
-                  defaultValue={session?.user?.email || ""}
+                  value={session?.user?.email || ""}
                   className={`${inputClass} pl-10`}
                   readOnly
                 />
@@ -103,6 +157,8 @@ export default function SettingsPage() {
                 </div>
                 <input
                   type="text"
+                  value={walletAddress}
+                  onChange={(event) => setWalletAddress(event.target.value)}
                   placeholder="0x8f...9e1c"
                   className={`${inputClass} pl-10 font-mono text-xs`}
                 />
@@ -118,6 +174,8 @@ export default function SettingsPage() {
                 </div>
                 <input
                   type="password"
+                  value={passphrase}
+                  onChange={(event) => setPassphrase(event.target.value)}
                   placeholder="••••••••"
                   className={`${inputClass} pl-10`}
                 />
@@ -181,14 +239,20 @@ export default function SettingsPage() {
           ))}
         </section>
 
+        {saveError && (
+          <p role="alert" className="text-sm text-rose-300">{saveError}</p>
+        )}
         <button
           type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3.5 text-sm font-semibold text-white shadow-glow-emerald transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-[0.98] sm:w-auto sm:px-8"
+          disabled={isSaving}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3.5 text-sm font-semibold text-white shadow-glow-emerald transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.45)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 sm:w-auto sm:px-8"
         >
           {saved ? (
             <>
               <Check className="h-4 w-4" /> Saved
             </>
+          ) : isSaving ? (
+            "Saving…"
           ) : (
             "Save Changes"
           )}

@@ -18,6 +18,7 @@ interface Claim {
 export default function PrivacyPassportPage() {
   const queryClient = useQueryClient()
   const [pulseGlow, setPulseGlow] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
 
   const { data: claimsData, isLoading } = useQuery({
     queryKey: ["claims"],
@@ -91,10 +92,36 @@ export default function PrivacyPassportPage() {
     }
   }
 
-  const handleReset = () => {
-    // Reset all display claims to default setting
-    const defaultState = displayClaims.map((c, idx) => ({ ...c, isPublic: idx < 2 }))
-    queryClient.setQueryData(["claims"], { claims: defaultState })
+  const handleReset = async () => {
+    setIsResetting(true)
+    try {
+      const realClaims = displayClaims.filter((claim) => !claim.id.startsWith("mock-"))
+      const responses = await Promise.all(
+        realClaims.map((claim) =>
+          fetch(`/api/claims/${claim.id}/visibility`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isPublic: true }),
+          })
+        )
+      )
+
+      if (responses.some((response) => !response.ok)) {
+        throw new Error("Unable to reset every claim")
+      }
+
+      queryClient.setQueryData(["claims"], {
+        claims: displayClaims.map((claim) => ({ ...claim, isPublic: true })),
+      })
+      await queryClient.invalidateQueries({ queryKey: ["claims"] })
+      setPulseGlow(true)
+      setTimeout(() => setPulseGlow(false), 500)
+    } catch (error) {
+      console.error("Failed to reset passport visibility", error)
+      await queryClient.invalidateQueries({ queryKey: ["claims"] })
+    } finally {
+      setIsResetting(false)
+    }
   }
 
   return (
@@ -196,9 +223,11 @@ export default function PrivacyPassportPage() {
             <div className="flex items-center justify-between mt-8 pt-4 border-t border-slate-850 text-xs">
               <button
                 onClick={handleReset}
-                className="text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1 font-medium"
+                disabled={isResetting}
+                className="text-slate-500 hover:text-slate-300 disabled:opacity-50 disabled:cursor-wait transition-colors flex items-center gap-1 font-medium"
               >
-                <RefreshCw className="h-3 w-3" /> Reset to Defaults
+                <RefreshCw className={`h-3 w-3 ${isResetting ? "animate-spin" : ""}`} />
+                {isResetting ? "Resetting…" : "Reset to Defaults"}
               </button>
               <Link
                 href="/proofs/generate"

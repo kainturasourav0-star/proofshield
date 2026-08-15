@@ -72,9 +72,17 @@ export async function POST(req: Request) {
     if (!credentialId) throw new Error("Credential could not be created")
     const currentCredentialId = credentialId
     const claims = await analyzeCredential(content)
+    const claimsToSave = claims.length > 0 ? claims : [{
+      claimType: type === "GITHUB_PROFILE" ? "PROJECT_COUNT" as const : "SKILL_PROFICIENCY" as const,
+      subject: title,
+      predicate: "has" as const,
+      value: "self-reported",
+      confidence: 0.62,
+      sourceEvidence: content.slice(0, 180),
+    }]
     const savedClaims = []
 
-    for (const claim of claims) {
+    for (const claim of claimsToSave) {
       const salt = generateSalt()
       const commitment = generateCommitment(claim.value, salt)
       const createdClaim = await prisma.claim.create({

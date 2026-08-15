@@ -1,4 +1,3 @@
-import React from "react"
 import { LucideIcon } from "lucide-react"
 
 interface StatsCardProps {
@@ -10,30 +9,13 @@ interface StatsCardProps {
 
 export function StatsCard({ label, value, icon: Icon, color = "emerald" }: StatsCardProps) {
   const palette = {
-    emerald: {
-      icon: "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
-      glow: "group-hover:border-emerald-400/25 group-hover:shadow-[0_18px_50px_-28px_rgba(16,185,129,0.65)]",
-    },
-    violet: {
-      icon: "border-violet-400/20 bg-violet-400/[0.08] text-violet-300",
-      glow: "group-hover:border-violet-400/25 group-hover:shadow-[0_18px_50px_-28px_rgba(139,92,246,0.55)]",
-    },
-    blue: {
-      icon: "border-blue-400/20 bg-blue-400/[0.08] text-blue-300",
-      glow: "group-hover:border-blue-400/25 group-hover:shadow-[0_18px_50px_-28px_rgba(59,130,246,0.55)]",
-    },
+    emerald: { mark: "bg-lime-300", icon: "border-lime-300/20 bg-lime-300/[0.07] text-lime-300" },
+    violet: { mark: "bg-violet-300", icon: "border-violet-300/20 bg-violet-300/[0.07] text-violet-200" },
+    blue: { mark: "bg-sky-300", icon: "border-sky-300/20 bg-sky-300/[0.07] text-sky-200" },
   }[color]
 
-  return (
-    <div className={`group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 transition duration-300 hover:-translate-y-0.5 ${palette.glow}`}>
-      <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-emerald-400/[0.05] blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</p>
-          <p className="mt-4 text-3xl font-semibold tracking-tight text-white tabular-nums">{value}</p>
-        </div>
-        <div className={`rounded-xl border p-2.5 ${palette.icon}`}><Icon className="h-[18px] w-[18px]" /></div>
-      </div>
-    </div>
-  )
+  return <div className="group relative overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 transition duration-500 hover:-translate-y-1 hover:border-white/[0.15] hover:bg-white/[0.045]">
+    <div className={`absolute left-0 top-5 h-8 w-0.5 ${palette.mark}`} />
+    <div className="relative flex items-start justify-between gap-4"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#687665]">{label}</p><p className="mt-5 font-serif text-4xl tracking-[-0.06em] text-[#f4f1e9] tabular-nums">{value}</p><p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-[#526050]">Live workspace signal</p></div><div className={`rounded-xl border p-2.5 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-105 ${palette.icon}`}><Icon className="h-[18px] w-[18px]" /></div></div>
+  </div>
 }

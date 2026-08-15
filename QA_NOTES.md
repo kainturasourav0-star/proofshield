@@ -92,3 +92,21 @@ The deployment from commit `ac7d3d7` is still in the Vercel build phase after th
 The latest Vercel deployment for commit `ac7d3d7` now exposes the production domain `proofshield-git-main-kainturasourav0-stars-projects.vercel.app` and preview domain `proofshield-jvui6zu65-kainturasourav0-stars-projects.vercel.app`. The deployment detail page is no longer showing the earlier failed state, but its build-log widget was still loading when the browser reset; the live production domain will be checked directly.
 
 Final live smoke test passed. The production domain `https://proofshield-git-main-kainturasourav0-stars-projects.vercel.app/` renders the ProofShield landing page successfully with the premium navigation, hero, passport proof card, method section, and working register CTA links visible.
+
+The local complete app tree is ready in commit `aeacbda`, but pushing it over the CLI was denied with GitHub HTTP 403 because the active `GH_TOKEN` lacks repository-write permission. The authenticated browser upload remains the published branch state. The verified Vercel production deployment currently serves the working premium ProofShield landing page at `https://proofshield-git-main-kainturasourav0-stars-projects.vercel.app/`.
+
+The upgraded local landing page renders successfully. Browser smoke testing confirmed the proof ID control is present and the third claim toggles from locked to shared with the intended visible state change.
+
+The documented demo credentials still returned `Invalid email or password` after seeding. The SQLite module now rebuilds successfully and the seed script reports success, so the next diagnosis is to compare the database path used by Next.js with the seed process.
+
+The root cause of the earlier demo-login failure was a Next.js runtime bundling error in `better-sqlite3` (`bindings.js` received an undefined filename). The Linux native module has been rebuilt, and Next.js now externalizes `better-sqlite3` and `@prisma/adapter-better-sqlite3`; the demo database is seeded and the preview has been restarted for a retest.
+
+After rebuilding the native SQLite module and externalizing it from Next.js, the seeded demo candidate can authenticate through the native submit path and reaches `/student-dashboard`. The redesigned authenticated shell renders correctly, and the GitHub credential option successfully switches from the file drop zone to the public URL analysis form.
+
+The stale HMR module error was resolved by a clean Next.js restart. The credential route now responds successfully, but one browser capture still showed unstyled content despite no CSS errors in the server log; a fresh navigation will confirm whether this is a transient browser rendering artifact.
+
+After a clean preview restart, manual claim submission now completes successfully and shows a persisted `SKILL PROFICIENCY` claim for `Frontend engineering portfolio verified` with 62% confidence. The deterministic fallback prevents empty success states when the external AI key is unavailable.
+
+Authenticated workflow QA completed: proof generation reaches confirmed receipt with no expiry, copy feedback changes to `Copied!`, Create another resets selection, and Proof History shows the receipt with Copy Link feedback. Privacy Passport toggles claims between public/private and the repaired Reset to Defaults persists all claims public. Settings now loads persisted profile fields, saves name and wallet through `/api/profile`, persists notification switches locally, and shows `Saved`. Recruiter Dashboard, Verify Candidate, and My Requirements render and accept actions; a requirement set named `Frontend launch rubric` was saved successfully. Verification against the generated proof with the default Python/Security+ criteria returned the expected failed criteria state.
+
+Verification Ledger QA passed: status filters narrow rows, keyword search produces the intended empty state, and proof links remain available. The dashboard `View Claims →` dead-end was fixed with an animated claims dialog; clicking it now shows the credential’s extracted claim, predicate/value, public/private badge, close control, and a link to manage visibility.

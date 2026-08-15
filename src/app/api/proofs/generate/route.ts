@@ -33,8 +33,8 @@ export async function POST(req: Request) {
     const commitments = claims.map((c) => c.commitment)
     const proofHash = generateProofHash(commitments)
 
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + expiresInDays)
+    const expiresAt = expiresInDays === null ? null : new Date()
+    if (expiresAt) expiresAt.setDate(expiresAt.getDate() + Number(expiresInDays))
 
     // Create Proof + ProofClaims in DB
     const proof = await prisma.proof.create({

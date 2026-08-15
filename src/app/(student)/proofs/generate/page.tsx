@@ -29,13 +29,13 @@ interface ShareData {
   proofId: string
   shareToken: string
   shareUrl: string
-  expiresAt: string
+  expiresAt: string | null
   mock?: boolean
 }
 
 export default function ProofGeneratorPage() {
   const [selectedClaims, setSelectedClaims] = useState<string[]>([])
-  const [expiryDays, setExpiryDays] = useState(7)
+  const [expiryDays, setExpiryDays] = useState<number | null>(7)
   const [step, setStep] = useState<"form" | "generating" | "success">("form")
   const [shareData, setShareData] = useState<ShareData | null>(null)
   const [copied, setCopied] = useState(false)
@@ -73,12 +73,12 @@ export default function ProofGeneratorPage() {
       // proof so the full demo flow works even without a seeded database.
       if (selectedClaims.some((id) => id.startsWith("mock-"))) {
         const shareToken = "demo-" + Math.random().toString(36).substring(2, 10)
-        const expiresAt = new Date(Date.now() + expiryDays * 86400000)
+        const expiresAt = expiryDays === null ? null : new Date(Date.now() + expiryDays * 86400000)
         return {
           proofId: "demo-proof",
           shareToken,
           shareUrl: `${window.location.origin}/verify/${shareToken}`,
-          expiresAt: expiresAt.toISOString(),
+          expiresAt: expiresAt?.toISOString() || null,
           mock: true,
         }
       }
@@ -137,11 +137,25 @@ export default function ProofGeneratorPage() {
     setStep("success")
   }
 
-  const handleCopy = () => {
-    if (shareData?.shareUrl) {
-      navigator.clipboard.writeText(shareData.shareUrl)
+  const handleCopy = async () => {
+    if (!shareData?.shareUrl) return
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.shareUrl)
+      } else {
+        const input = document.createElement("textarea")
+        input.value = shareData.shareUrl
+        input.style.position = "fixed"
+        input.style.opacity = "0"
+        document.body.appendChild(input)
+        input.select()
+        document.execCommand("copy")
+        input.remove()
+      }
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setCopied(false)
     }
   }
 
@@ -211,14 +225,14 @@ export default function ProofGeneratorPage() {
               <div className="space-y-2 pt-4 border-t border-slate-800">
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Expiry duration</label>
                 <select
-                  value={expiryDays}
-                  onChange={(e) => setExpiryDays(parseInt(e.target.value))}
+                  value={expiryDays === null ? "never" : String(expiryDays)}
+                  onChange={(e) => setExpiryDays(e.target.value === "never" ? null : parseInt(e.target.value, 10))}
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors"
                 >
                   <option value={7}>7 Days (Recommended)</option>
                   <option value={30}>30 Days</option>
                   <option value={90}>90 Days</option>
-                  <option value={999}>No Expiry</option>
+                  <option value="never">No expiry</option>
                 </select>
               </div>
 
@@ -257,7 +271,7 @@ export default function ProofGeneratorPage() {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-2xs text-slate-500">
-                  <span>EXPIRES: {expiryDays === 999 ? "NEVER" : `${expiryDays} DAYS`}</span>
+                  <span>EXPIRES: {expiryDays === null ? "NEVER" : `${expiryDays} DAYS`}</span>
                   <span>ID: CANDIDATE_#9A81F</span>
                 </div>
               </div>
@@ -346,12 +360,19 @@ export default function ProofGeneratorPage() {
             >
               <Mail className="h-4 w-4" /> Share via Email
             </a>
-            <Link
-              href="/dashboard"
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-glow-emerald"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to Dashboard
-            </Link>
+              <button
+                type="button"
+                onClick={() => { setStep("form"); setShareData(null); setSelectedClaims([]); setCopied(false) }}
+                className="flex-1 py-3 px-4 border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors text-sm"
+              >
+                <Cpu className="h-4 w-4" /> Create another
+              </button>
+              <Link
+                href="/student-dashboard"
+                className="flex-1 py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all text-sm shadow-glow-emerald"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back to dashboard
+              </Link>
           </div>
         </div>
       )}
