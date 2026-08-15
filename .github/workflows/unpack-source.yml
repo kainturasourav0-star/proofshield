@@ -1,0 +1,111 @@
+name: Restore complete ProofShield source tree
+
+
+
+on:
+
+  push:
+  
+    paths:
+    
+      - proofshield-source.zip
+      
+  workflow_dispatch:
+  
+
+
+permissions:
+
+  contents: write
+  
+
+
+jobs:
+
+  restore:
+  
+    runs-on: ubuntu-latest
+    
+    steps:
+    
+      - name: Check out repository
+      
+        uses: actions/checkout@v4
+        
+        with:
+        
+          fetch-depth: 0
+          
+
+
+      - name: Restore local source tree
+      
+        run: |
+        
+          shopt -s dotglob nullglob
+          
+          for entry in *; do
+          
+            case "$entry" in
+            
+              .git|.github|proofshield-source.zip) continue ;;
+              
+            esac
+            
+            rm -rf -- "$entry"
+            
+          done
+          
+          unzip -q proofshield-source.zip -d .
+          
+          rm proofshield-source.zip
+          
+
+
+      - name: Commit restored source
+      
+        run: |
+        
+          git config user.name "github-actions[bot]"
+          
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git add -A
+          
+          if git diff --cached --quiet; then exit 0; fi
+          
+          git commit -m "Restore complete ProofShield source tree"
+          
+          git push
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
