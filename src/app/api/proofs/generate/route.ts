@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/auth"
 import { generateProofHash } from "@/lib/midnight/proofs"
 import { MidnightClient } from "@/lib/midnight/client"
+import { demoCandidateProof, isDemoCandidate } from "@/lib/demo-data"
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -17,6 +18,17 @@ export async function POST(req: Request) {
     }
 
     const userId = session.user.id!
+
+    if (isDemoCandidate(userId)) {
+      const baseUrl = process.env.NEXTAUTH_URL || new URL(req.url).origin
+      return NextResponse.json({
+        proofId: demoCandidateProof.id,
+        shareToken: demoCandidateProof.shareToken,
+        shareUrl: `${baseUrl}/verify/${demoCandidateProof.shareToken}`,
+        expiresAt: expiresInDays === null ? null : demoCandidateProof.expiresAt,
+        mock: true,
+      })
+    }
 
     // Validate claims belong to authenticated user
     const claims = await prisma.claim.findMany({

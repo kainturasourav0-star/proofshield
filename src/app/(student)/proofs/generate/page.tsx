@@ -71,9 +71,9 @@ export default function ProofGeneratorPage() {
     mutationFn: async () => {
       // Demo fallback: mock claims are not in the DB, so synthesize a local
       // proof so the full demo flow works even without a seeded database.
-      if (selectedClaims.some((id) => id.startsWith("mock-"))) {
-        const shareToken = "demo-" + Math.random().toString(36).substring(2, 10)
-        const expiresAt = expiryDays === null ? null : new Date(Date.now() + expiryDays * 86400000)
+      if (selectedClaims.some((id) => id.startsWith("mock-") || id.startsWith("demo-"))) {
+        const shareToken = "demo-candidate-proof"
+        const expiresAt = expiryDays === null ? null : new Date("2026-09-30T23:59:59.000Z")
         return {
           proofId: "demo-proof",
           shareToken,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/auth"
+import { demoCandidateProof, isDemoProofToken, isDemoRecruiter } from "@/lib/demo-data"
 
 const SKILL_LEVELS: Record<string, number> = {
   "Beginner": 0,
@@ -55,16 +56,18 @@ export async function POST(req: Request) {
     }
 
     // Lookup proof by token
-    const proof = await prisma.proof.findUnique({
-      where: { shareToken: shareToken },
-      include: {
-        proofClaims: {
+    const proof = isDemoProofToken(shareToken)
+      ? demoCandidateProof
+      : await prisma.proof.findUnique({
+          where: { shareToken: shareToken },
           include: {
-            claim: true,
+            proofClaims: {
+              include: {
+                claim: true,
+              },
+            },
           },
-        },
-      },
-    })
+        })
 
     if (!proof) {
       return NextResponse.json({ error: "Proof not found" }, { status: 404 })
@@ -104,7 +107,7 @@ export async function POST(req: Request) {
 
     // Write verification ledger record if authenticated (i.e. if a recruiter is saving the verification)
     const recruiterId = session?.user?.id
-    if (recruiterId) {
+    if (recruiterId && !isDemoRecruiter(recruiterId)) {
       await prisma.verification.create({
         data: {
           recruiterId: recruiterId,
