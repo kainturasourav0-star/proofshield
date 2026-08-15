@@ -113,6 +113,24 @@ export const demoCandidateCredentials = [
 ]
 
 export const demoCandidateClaims = demoCandidateCredentials.flatMap((credential) => credential.claims)
+
+export const demoCandidateProof = {
+  id: "demo-proof",
+  candidateId: DEMO_CANDIDATE_ID,
+  proofHash: "0xdemo-proof-hash-8f2a7b1c3d9e5f6a8b0c2e4d6f8a0b2c4d6e8f0a",
+  midnightTxId: "demo-midnight-tx-2026",
+  midnightStatus: "CONFIRMED" as const,
+  shareToken: "demo-candidate-proof",
+  expiresAt: new Date("2026-09-30T23:59:59.000Z"),
+  createdAt: new Date("2026-08-15T10:00:00.000Z"),
+  proofClaims: demoCandidateClaims.map((claim) => ({
+    id: `demo-proof-claim-${claim.id}`,
+    proofId: "demo-proof",
+    claimId: claim.id,
+    claim,
+  })),
+}
+
 export const demoCandidateProofs: unknown[] = []
 
 export function isDemoCandidate(userId?: string | null) {
@@ -121,4 +139,8 @@ export function isDemoCandidate(userId?: string | null) {
 
 export function isDemoRecruiter(userId?: string | null) {
   return userId === DEMO_RECRUITER_ID
+}
+
+export function isDemoProofToken(shareToken?: string | null) {
+  return shareToken === demoCandidateProof.shareToken
 }

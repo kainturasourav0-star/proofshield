@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
+import { demoCandidateProof, isDemoProofToken } from "@/lib/demo-data"
 
 export async function GET(
   req: Request,
@@ -7,6 +8,10 @@ export async function GET(
 ) {
   try {
     const { shareToken } = params
+    if (isDemoProofToken(shareToken)) {
+      return NextResponse.json({ proof: demoCandidateProof })
+    }
+
     const proof = await prisma.proof.findUnique({
       where: { shareToken: shareToken },
       include: {

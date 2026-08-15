@@ -3,6 +3,7 @@ import Link from "next/link"
 import { AlertTriangle, Shield } from "lucide-react"
 import { prisma } from "@/lib/db/prisma"
 import { VerifyReceipt } from "@/components/public/VerifyReceipt"
+import { demoCandidateProof, isDemoProofToken } from "@/lib/demo-data"
 
 interface PageProps {
   params: {
@@ -18,6 +19,8 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 async function getProofData(shareToken: string) {
+  if (isDemoProofToken(shareToken)) return demoCandidateProof
+
   try {
     return await prisma.proof.findUnique({
       where: { shareToken },
