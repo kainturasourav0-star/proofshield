@@ -133,3 +133,14 @@ The new login route renders the Trionn-inspired split composition with staged he
 
 
 The landing page now includes a scroll-progress rail and a working `Open live demo` CTA that routes to `/auth/login?demo=candidate`. The hero proof object still supports animated claim disclosure toggles; the previously private GPA claim successfully became shared during QA.
+
+
+Production motion QA: the Ready root-tree deployment serves the redesigned split auth screen with candidate demo preloading, role tabs, and demo cards. Clicking the live candidate demo Launch button currently reaches `/api/auth/error` with a server configuration error, so production auth configuration still needs repair before final handoff.
+
+
+## Production Auth.js configuration repair
+
+Vercel runtime logs for the previous Ready deployment showed `MissingSecret: Please define a \`secret\`` on `/api/auth/session` and `/auth/login`. With user confirmation, the Vercel project now contains sensitive `AUTH_SECRET` and `NEXTAUTH_URL` variables for Production and Preview. A confirmed production redeploy was created at deployment `BUjDT11cdFShYQResGBzhBQdW2Zd` from source commit `b81444d`; its deployment domain is `proofshield-803ehyx05-kainturasourav0-stars-projects.vercel.app` and it was still in the build-cache stage at the last observation. The canonical project domain remains `https://proofshield.vercel.app`.
+
+
+Final production auth retest on `proofshield-803ehyx05-kainturasourav0-stars-projects.vercel.app`: the premium login page renders and the Auth.js configuration no longer throws `MissingSecret`, but Candidate demo Launch reports `The demo account is unavailable right now`. This indicates the production database/demo seed is not available to the deployed server and must be repaired or clearly surfaced before final handoff.
