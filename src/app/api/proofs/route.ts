@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/auth"
+import { demoCandidateProofs, isDemoCandidate } from "@/lib/demo-data"
 
 export async function GET(req: Request) {
   const session = await auth()
   if (!session || !session.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  if (isDemoCandidate(session.user.id)) {
+    return NextResponse.json({ proofs: demoCandidateProofs })
   }
 
   try {
